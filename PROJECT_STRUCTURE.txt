@@ -1,0 +1,40 @@
+src/
+├── App.vue
+├── main.js
+├── manifest.json
+├── mock
+│   └── mockData.js
+├── pages
+│   ├── account
+│   │   └── account.vue
+│   ├── cart
+│   │   └── cart.vue
+│   ├── checkout
+│   │   └── checkout.vue
+│   ├── index
+│   │   └── index.vue
+│   ├── login
+│   │   └── login.vue
+│   ├── order
+│   │   ├── list.vue
+│   │   └── success.vue
+│   └── sales
+│       └── dealer-select.vue
+├── pages.json
+├── static
+│   ├── logo.png
+│   └── tabbar
+│       ├── account-active.png
+│       ├── account.png
+│       ├── home-active.png
+│       ├── home.png
+│       ├── order-active.png
+│       └── order.png
+├── store
+│   └── index.js
+├── uni.promisify.adaptor.js
+├── uni.scss
+└── utils
+    └── api.js
+
+13 directories, 24 files
