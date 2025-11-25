@@ -16,14 +16,40 @@
 | 模块 | 核心逻辑实现 | PRD 对应章节 |
 | :--- | :--- | :--- |
 | **登录** | 手机号+验证码登录，模拟 `CheckUser` 接口校验授权用户。 | 2.1 |
-| **商品列表** | 模拟 `Product.List` 获取商品，并实时调用 `Product.Stock` 获取库存。库存 <= 0 时，“加入购物车”按钮置灰。 | 2.2 |
+| **首页（资金流水）** | 展示账户余额、授信额度和资金流水记录。实时调用 `Fund.Balance` 和 `GetTransactionList`。 | 2.5 |
+| **商品列表** | 模拟 `Product.List` 获取商品，并实时调用 `Product.Stock` 获取库存。库存 <= 0 时，"加入购物车"按钮置灰。 | 2.2 |
 | **购物车** | 支持批量修改数量、删除。数量校验（起订量倍数）。 | 2.3 |
 | **结算** | **资金预检**：并发调用 `GetStock` 和 `GetBalance`。若总可用资金 < 订单总额，提交按钮置灰并提示缺口。 | 2.3 |
 | **下单** | 模拟 `Order.Create` 事务级操作，包含库存/余额校验，并返回订单号。 | 2.4 |
-| **账户查询** | 模拟 `Fund.Balance` 获取余额/授信，`GetTransactionList` 获取资金流水。 | 2.5 |
-| **订单管理** | 模拟 `Order.List` 获取历史订单，并根据状态显示“取消订单”或“申请退货”按钮。 | 2.6 |
+| **我的（订单+账户）** | 整合订单列表查看、购物车入口、代客下单入口。 | 2.6, 2.7 |
+| **订单详情** | 支持查看订单详情、取消订单、申请退货，并可跳转购物车。 | 2.6 |
 | **代客下单** | 业务员登录后，可模拟 `Dealer.List` 选择经销商，后续所有操作（查询、下单）均携带 `Target_Dealer_ID`。 | 2.7 |
 | **全局规则** | 实现了接口异常处理规范（模拟 5% 概率的“系统维护中”提示）。 | 1.1 |
+
+## 导航结构
+
+### 底部导航栏（TabBar）
+
+| 图标 | 名称 | 页面路径 | 功能说明 |
+| :---: | :---: | :--- | :--- |
+| 🏠 | 首页 | pages/index/index | 显示账户余额和资金流水记录 |
+| 📦 | 商品 | pages/products/products | 商品列表、搜索、加入购物车 |
+| 👤 | 我的 | pages/mine/mine | 订单列表、购物车、代客下单入口 |
+
+### 页面层级
+
+```
+├── 登录页 (pages/login/login)
+├── 首页 - 资金流水 (pages/index/index) [TabBar]
+├── 商品页 (pages/products/products) [TabBar]
+│   ├── 购物车 (pages/cart/cart)
+│   └── 结算页 (pages/checkout/checkout)
+│       └── 下单成功 (pages/order/success)
+└── 我的 (pages/mine/mine) [TabBar]
+    ├── 订单详情 (pages/order/detail)
+    │   └── 购物车 (pages/cart/cart)
+    └── 代客下单 (pages/sales/dealer-select)
+```
 
 ## Mock 数据说明
 
@@ -72,6 +98,43 @@ npm run dev:h5
 npm run dev:mp-weixin
 ```
 
+## 核心功能演示流程
+
+### 流程1：查看资金流水
+
+1. 使用 `13800001111` 登录
+2. 进入首页，查看账户余额和资金流水
+3. 观察资金变动记录
+
+### 流程2：商品订购
+
+1. 点击底部导航"商品"
+2. 浏览商品列表，搜索商品
+3. 调整数量，加入购物车
+4. 点击底部购物车图标，进入购物车
+5. 确认商品和数量，点击"去结算"
+6. 查看资金预检结果，点击"确认下单"
+7. 跳转到下单成功页面
+
+### 流程3：订单管理
+
+1. 点击底部导航"我的"
+2. 查看订单列表
+3. 点击订单查看详情
+4. 在订单详情页可以：
+   - 取消订单（待发货状态）
+   - 申请退货（已收货状态）
+   - 跳转到购物车继续购物
+
+### 流程4：代客下单
+
+1. 使用 `13900002222` 登录（业务员账号）
+2. 点击底部导航"我的"
+3. 点击"代客下单"
+4. 选择一个经销商
+5. 系统自动跳转到商品页面
+6. 以该经销商身份进行订货操作
+
 ## 交互与规则实现细节
 
 ### 异常处理
@@ -85,3 +148,18 @@ npm run dev:mp-weixin
 ### 代客下单
 
 在 `src/pages/sales/dealer-select.vue` 中，业务员选择经销商后，`src/store/index.js` 会设置 `targetDealer`，并更新 `api.js` 中的 `globalTargetDealerId`。所有后续 API 调用（如 `orderCreate`）都会通过 `getGlobalCustomerId()` 自动携带正确的客户 ID，实现身份模拟。
+
+## 项目文档
+
+*   **README.md** - 本文档
+*   **DEVELOPMENT.md** - 详细开发指南、测试场景、常见问题
+*   **PROJECT_SUMMARY.md** - 项目交付总结和优化建议
+
+## GitHub 仓库
+
+https://github.com/JK-Fong/b2b-dealer-ordering-mini-program
+
+## 技术支持
+
+如有任何问题，请通过 GitHub Issues 提交：
+https://github.com/JK-Fong/b2b-dealer-ordering-mini-program/issues
