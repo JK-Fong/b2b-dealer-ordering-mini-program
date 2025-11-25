@@ -1,6 +1,7 @@
 <script>
 	export default {
 		onLaunch: function() {
+			this.$store.commit('INIT_STORE');
 			console.log('App Launch')
 		},
 		onShow: function() {
