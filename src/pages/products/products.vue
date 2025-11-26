@@ -1,54 +1,114 @@
 <template>
-	<view class="container">
-		<view class="header">
-			<text class="customer-info">当前客户: {{ $store.getters.currentCustomerName }}</text>
-			<text class="logout-btn" @click="handleLogout">退出</text>
-		</view>
-		
-		<view class="search-bar">
-			<input class="search-input" placeholder="搜索商品名称/编码" v-model="searchKeyword" @confirm="loadProducts" />
-			<button class="search-btn" @click="loadProducts">搜索</button>
-		</view>
-
-		<view class="product-list">
-			<view v-if="loading" class="loading-text">加载中...</view>
-			<view v-else-if="products.length === 0" class="empty-text">暂无商品数据</view>
-			<view v-else v-for="product in products" :key="product.product_id" class="product-item">
-				<view class="product-info">
-					<text class="product-name">{{ product.name }}</text>
-					<text class="product-spec">{{ product.spec }} / {{ product.unit }}</text>
-					<text class="product-price">¥ {{ product.price.toFixed(2) }}</text>
-					<text class="product-stock" :class="{'out-of-stock': product.stock <= 0}">
-						库存: {{ product.stock > 0 ? product.stock : '缺货' }}
-					</text>
-				</view>
-				<view class="product-actions">
-					<text class="min-qty">起订量: {{ product.min_order_qty }}</text>
-					<view class="quantity-control">
-						<button class="qty-btn" @click="changeQuantity(product, -1)" :disabled="product.qty <= 0">-</button>
-						<input class="qty-input" type="number" v-model.number="product.qty" @blur="validateQuantity(product)" />
-						<button class="qty-btn" @click="changeQuantity(product, 1)">+</button>
-					</view>
-					<button class="add-to-cart-btn" 
-							:disabled="product.stock <= 0 || product.qty <= 0" 
-							@click="addToCart(product)">
-						加入购物车
-					</button>
-				</view>
+	<view class="page-container">
+		<!-- 顶部用户信息栏 -->
+		<view class="top-bar">
+			<text class="current-customer">{{ $store.getters.currentCustomerName }}</text>
+			<view class="logout-btn" @click="handleLogout">
+				<text class="logout-icon">⚡</text>
+				<text class="logout-text">Logout</text>
 			</view>
 		</view>
+		
+		<!-- 搜索栏 -->
+		<view class="search-section">
+			<view class="search-bar">
+				<text class="search-icon">🔍</text>
+				<input 
+					class="search-input" 
+					placeholder="Search products" 
+					v-model="searchKeyword" 
+					@confirm="loadProducts"
+				/>
+			</view>
+			<view class="search-btn" @click="loadProducts">
+				<text class="search-btn-text">Search</text>
+			</view>
+		</view>
+		
+		<!-- 商品列表 -->
+		<scroll-view class="product-list" scroll-y @scrolltolower="loadMore">
+			<view v-if="loading && products.length === 0" class="loading-state">
+				<text class="loading-text">Loading...</text>
+			</view>
+			<view v-else-if="products.length === 0" class="empty-state">
+				<text class="empty-text">No products found</text>
+			</view>
+			<view v-else class="product-items">
+				<view 
+					v-for="product in products" 
+					:key="product.product_id" 
+					class="product-card"
+				>
+					<!-- 商品图片 -->
+					<image 
+						class="product-image" 
+						:src="product.image || '/static/placeholder.png'" 
+						mode="aspectFill"
+					></image>
+					
+					<!-- 商品信息 -->
+					<view class="product-info">
+						<text class="product-name">{{ product.name }}</text>
+						<text class="product-spec">{{ product.spec }}</text>
+						<text class="product-price">¥{{ product.price.toFixed(2) }}</text>
+						<view class="stock-badge" :class="product.stock <= 0 ? 'out-of-stock' : ''">
+							<text class="stock-text">Stock: {{ product.stock > 0 ? product.stock : 'Out' }}</text>
+						</view>
+					</view>
+					
+					<!-- 操作区域 -->
+					<view class="product-actions">
+						<text class="min-order-label">Min Order: {{ product.min_order_qty }}</text>
+						<view class="quantity-stepper">
+							<view 
+								class="stepper-btn minus" 
+								:class="product.qty <= 0 ? 'disabled' : ''"
+								@click="changeQuantity(product, -product.min_order_qty)"
+							>
+								<text class="stepper-icon">−</text>
+							</view>
+							<input 
+								class="quantity-input" 
+								type="number" 
+								v-model.number="product.qty"
+								@blur="validateQuantity(product)"
+							/>
+							<view 
+								class="stepper-btn plus"
+								@click="changeQuantity(product, product.min_order_qty)"
+							>
+								<text class="stepper-icon">+</text>
+							</view>
+						</view>
+						<view 
+							class="add-cart-btn" 
+							:class="product.stock <= 0 ? 'disabled' : ''"
+							@click="addToCart(product)"
+						>
+							<text class="cart-icon">🛒</text>
+							<text class="cart-text">Add to Cart</text>
+						</view>
+					</view>
+				</view>
+			</view>
+		</scroll-view>
 		
 		<!-- 底部购物车悬浮栏 -->
-		<view class="cart-bar" @click="goToCart">
+		<view class="cart-float-bar" @click="goToCart">
 			<view class="cart-icon-wrapper">
-				<text class="cart-icon">🛒</text>
-				<text v-if="$store.getters.cartCount > 0" class="cart-badge">{{ $store.getters.cartCount }}</text>
+				<text class="cart-icon-large">🛒</text>
+				<view v-if="$store.getters.cartCount > 0" class="cart-badge">
+					<text class="badge-text">{{ $store.getters.cartCount }}</text>
+				</view>
 			</view>
 			<view class="cart-summary">
-				<text class="cart-total">总计: ¥ {{ $store.getters.cartTotal.toFixed(2) }}</text>
-				<text class="cart-count">共 {{ $store.state.cart.length }} 种商品</text>
+				<text class="cart-total">¥{{ $store.getters.cartTotal.toFixed(2) }}</text>
+				<text class="cart-count">{{ $store.state.cart.length }} items</text>
 			</view>
-			<button class="checkout-btn" :disabled="$store.getters.cartCount === 0">去结算</button>
+			<view class="checkout-btn" :class="$store.getters.cartCount === 0 ? 'disabled' : ''">
+				<text class="checkout-icon">💳</text>
+				<text class="checkout-text">Checkout</text>
+			</view>
 		</view>
 	</view>
 </template>
@@ -65,17 +125,29 @@
 			};
 		},
 		onShow() {
-			// 每次进入页面都检查登录状态
 			if (!this.$store.state.isLoggedIn) {
 				uni.reLaunch({ url: '/pages/login/login' });
 				return;
 			}
 			this.loadProducts();
 		},
+		onPullDownRefresh() {
+			this.loadProducts().then(() => {
+				uni.stopPullDownRefresh();
+			});
+		},
 		methods: {
 			handleLogout() {
-				this.$store.commit('LOGOUT');
-				uni.reLaunch({ url: '/pages/login/login' });
+				uni.showModal({
+					title: 'Confirm Logout',
+					content: 'Are you sure you want to logout?',
+					success: (res) => {
+						if (res.confirm) {
+							this.$store.commit('LOGOUT');
+							uni.reLaunch({ url: '/pages/login/login' });
+						}
+					}
+				});
 			},
 			async loadProducts() {
 				this.loading = true;
@@ -85,12 +157,15 @@
 				if (res.success) {
 					let productList = res.data;
 					
-					// 1. 过滤搜索结果
+					// 过滤搜索结果
 					if (this.searchKeyword) {
-						productList = productList.filter(p => p.name.includes(this.searchKeyword) || p.product_id.includes(this.searchKeyword));
+						productList = productList.filter(p => 
+							p.name.includes(this.searchKeyword) || 
+							p.product_id.includes(this.searchKeyword)
+						);
 					}
 					
-					// 2. 获取实时库存
+					// 获取实时库存
 					const productIds = productList.map(p => p.product_id);
 					const stockRes = await api.productStock(productIds);
 					
@@ -101,17 +176,16 @@
 						}, {});
 						
 						this.products = productList.map(p => {
-							// 3. 合并库存信息，并初始化数量
 							const cartItem = this.$store.state.cart.find(c => c.product_id === p.product_id);
 							return {
 								...p,
 								stock: stockMap[p.product_id] || 0,
-								qty: cartItem ? cartItem.qty : 0, // 从购物车同步数量
+								qty: cartItem ? cartItem.qty : 0,
+								image: p.image || '/static/placeholder.png', // 商品图片
 							};
 						});
 					} else {
 						uni.showToast({ title: stockRes.msg, icon: 'none' });
-						this.products = productList.map(p => ({ ...p, stock: -1, qty: 0 })); // 库存获取失败
 					}
 				} else {
 					uni.showToast({ title: res.msg, icon: 'none' });
@@ -122,7 +196,7 @@
 				if (newQty < 0) newQty = 0;
 				if (newQty > product.stock && product.stock > 0) {
 					newQty = product.stock;
-					uni.showToast({ title: '已达最大库存', icon: 'none' });
+					uni.showToast({ title: 'Max stock reached', icon: 'none' });
 				}
 				product.qty = newQty;
 				this.updateCart(product);
@@ -133,12 +207,12 @@
 				}
 				if (product.qty > product.stock && product.stock > 0) {
 					product.qty = product.stock;
-					uni.showToast({ title: '已达最大库存', icon: 'none' });
+					uni.showToast({ title: 'Max stock reached', icon: 'none' });
 				}
 				// 确保数量是起订量的倍数
 				if (product.qty % product.min_order_qty !== 0) {
 					product.qty = Math.floor(product.qty / product.min_order_qty) * product.min_order_qty;
-					uni.showToast({ title: `数量必须是起订量 ${product.min_order_qty} 的倍数`, icon: 'none' });
+					uni.showToast({ title: `Quantity must be multiple of ${product.min_order_qty}`, icon: 'none' });
 				}
 				this.updateCart(product);
 			},
@@ -157,248 +231,369 @@
 				}
 			},
 			addToCart(product) {
+				if (product.stock <= 0) return;
 				if (product.qty <= 0) {
-					// 首次点击加入购物车，默认数量为起订量
 					product.qty = product.min_order_qty;
 				}
 				this.updateCart(product);
-				uni.showToast({ title: '已加入购物车', icon: 'success' });
+				uni.showToast({ title: 'Added to cart', icon: 'success' });
 			},
 			goToCart() {
 				if (this.$store.getters.cartCount > 0) {
 					uni.navigateTo({ url: '/pages/cart/cart' });
 				}
+			},
+			loadMore() {
+				// 分页加载逻辑（可选）
 			}
 		}
 	}
 </script>
 
 <style scoped>
-	.container {
-		padding-bottom: 120rpx; /* 留出底部购物车栏空间 */
+	/* 页面容器 */
+	.page-container {
+		min-height: 100vh;
+		background-color: #F5F5F5;
+		padding-bottom: 140rpx; /* 为底部购物车栏留空间 */
 	}
 	
-	.header {
+	/* 顶部用户信息栏 */
+	.top-bar {
+		background-color: #FFFFFF;
+		padding: 20rpx 30rpx;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 20rpx;
-		background-color: #f8f8f8;
-		border-bottom: 1px solid #eee;
+		border-bottom: 1rpx solid #E0E0E0;
 	}
 	
-	.customer-info {
-		font-size: 28rpx;
-		color: #333;
+	.current-customer {
+		font-size: 32rpx;
+		font-weight: bold;
+		color: #333333;
 	}
 	
 	.logout-btn {
-		font-size: 28rpx;
-		color: #1976D2;
-	}
-
-	.search-bar {
 		display: flex;
-		padding: 20rpx;
-		background-color: #fff;
-		border-bottom: 1px solid #eee;
+		align-items: center;
+		gap: 8rpx;
+		padding: 12rpx 24rpx;
+		background-color: #F5F5F5;
+		border-radius: 24rpx;
 	}
-
+	
+	.logout-icon {
+		font-size: 28rpx;
+	}
+	
+	.logout-text {
+		font-size: 26rpx;
+		color: #666666;
+	}
+	
+	/* 搜索栏 */
+	.search-section {
+		background-color: #FFFFFF;
+		padding: 20rpx 30rpx;
+		display: flex;
+		gap: 20rpx;
+		border-bottom: 1rpx solid #E0E0E0;
+	}
+	
+	.search-bar {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		background-color: #F5F5F5;
+		border-radius: 30rpx;
+		padding: 0 24rpx;
+		height: 70rpx;
+	}
+	
+	.search-icon {
+		font-size: 32rpx;
+		margin-right: 12rpx;
+	}
+	
 	.search-input {
 		flex: 1;
-		height: 70rpx;
-		line-height: 70rpx;
-		padding: 0 20rpx;
-		background-color: #f0f0f0;
-		border-radius: 35rpx;
 		font-size: 28rpx;
-		margin-right: 20rpx;
+		color: #333333;
 	}
 	
 	.search-btn {
-		width: 120rpx;
+		width: 140rpx;
 		height: 70rpx;
-		line-height: 70rpx;
-		font-size: 28rpx;
 		background-color: #1976D2;
-		color: white;
-		padding: 0;
-	}
-
-	.product-list {
-		padding: 0 20rpx;
-	}
-
-	.product-item {
+		border-radius: 30rpx;
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		padding: 20rpx 0;
-		border-bottom: 1px solid #f0f0f0;
+		justify-content: center;
 	}
-
+	
+	.search-btn-text {
+		font-size: 28rpx;
+		color: #FFFFFF;
+		font-weight: 500;
+	}
+	
+	/* 商品列表 */
+	.product-list {
+		height: calc(100vh - 240rpx);
+		padding: 20rpx 30rpx;
+	}
+	
+	.loading-state,
+	.empty-state {
+		padding: 100rpx 0;
+		text-align: center;
+	}
+	
+	.loading-text,
+	.empty-text {
+		font-size: 28rpx;
+		color: #999999;
+	}
+	
+	.product-items {
+		display: flex;
+		flex-direction: column;
+		gap: 20rpx;
+	}
+	
+	/* 商品卡片 */
+	.product-card {
+		background-color: #FFFFFF;
+		border-radius: 16rpx;
+		padding: 24rpx;
+		display: flex;
+		gap: 20rpx;
+		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+	}
+	
+	.product-image {
+		width: 160rpx;
+		height: 160rpx;
+		border-radius: 12rpx;
+		background-color: #F5F5F5;
+		flex-shrink: 0;
+	}
+	
 	.product-info {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		gap: 8rpx;
 	}
-
+	
 	.product-name {
-		font-size: 32rpx;
+		font-size: 30rpx;
 		font-weight: bold;
-		color: #333;
+		color: #333333;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
-
+	
 	.product-spec {
 		font-size: 24rpx;
-		color: #999;
-		margin-top: 5rpx;
+		color: #999999;
 	}
-
+	
 	.product-price {
 		font-size: 36rpx;
-		color: #E64A19; /* 红色用于金额 */
 		font-weight: bold;
-		margin-top: 10rpx;
+		color: #E64A19;
+		margin-top: 4rpx;
 	}
 	
-	.product-stock {
-		font-size: 24rpx;
+	.stock-badge {
+		display: inline-flex;
+		align-items: center;
+		padding: 6rpx 16rpx;
+		background-color: #E3F2FD;
+		border-radius: 20rpx;
+		align-self: flex-start;
+	}
+	
+	.stock-badge.out-of-stock {
+		background-color: #FFEBEE;
+	}
+	
+	.stock-text {
+		font-size: 22rpx;
 		color: #1976D2;
-		margin-top: 5rpx;
+		font-weight: 500;
 	}
 	
-	.out-of-stock {
+	.stock-badge.out-of-stock .stock-text {
 		color: #F44336;
 	}
-
+	
+	/* 操作区域 */
 	.product-actions {
 		display: flex;
 		flex-direction: column;
+		gap: 12rpx;
 		align-items: flex-end;
 	}
 	
-	.min-qty {
-		font-size: 24rpx;
-		color: #999;
-		margin-bottom: 10rpx;
-	}
-
-	.quantity-control {
-		display: flex;
-		align-items: center;
-		margin-bottom: 10rpx;
-	}
-
-	.qty-btn {
-		width: 50rpx;
-		height: 50rpx;
-		line-height: 50rpx;
-		font-size: 36rpx;
-		text-align: center;
-		border: 1px solid #ccc;
-		background-color: #fff;
-		padding: 0;
-		margin: 0;
-	}
-
-	.qty-input {
-		width: 80rpx;
-		height: 50rpx;
-		line-height: 50rpx;
-		text-align: center;
-		border-top: 1px solid #ccc;
-		border-bottom: 1px solid #ccc;
-		font-size: 28rpx;
-		margin: 0 5rpx;
-	}
-
-	.add-to-cart-btn {
-		width: 200rpx;
-		height: 60rpx;
-		line-height: 60rpx;
-		font-size: 28rpx;
-		background-color: #4CAF50;
-		color: white;
-		padding: 0;
+	.min-order-label {
+		font-size: 22rpx;
+		color: #999999;
+		background-color: #F5F5F5;
+		padding: 4rpx 12rpx;
+		border-radius: 12rpx;
 	}
 	
-	.add-to-cart-btn[disabled] {
-		background-color: #ccc;
+	.quantity-stepper {
+		display: flex;
+		align-items: center;
+		border: 1rpx solid #E0E0E0;
+		border-radius: 8rpx;
+		overflow: hidden;
+	}
+	
+	.stepper-btn {
+		width: 50rpx;
+		height: 50rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: #F5F5F5;
+	}
+	
+	.stepper-btn.disabled {
+		opacity: 0.4;
+	}
+	
+	.stepper-icon {
+		font-size: 32rpx;
+		color: #666666;
+		font-weight: bold;
+	}
+	
+	.quantity-input {
+		width: 80rpx;
+		height: 50rpx;
+		text-align: center;
+		font-size: 28rpx;
+		color: #333333;
+		background-color: #FFFFFF;
+	}
+	
+	.add-cart-btn {
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
+		padding: 12rpx 24rpx;
+		background-color: #4CAF50;
+		border-radius: 24rpx;
+	}
+	
+	.add-cart-btn.disabled {
+		background-color: #CCCCCC;
+		opacity: 0.6;
+	}
+	
+	.cart-icon,
+	.cart-text {
+		color: #FFFFFF;
+	}
+	
+	.cart-icon {
+		font-size: 28rpx;
+	}
+	
+	.cart-text {
+		font-size: 26rpx;
+		font-weight: 500;
 	}
 	
 	/* 底部购物车悬浮栏 */
-	.cart-bar {
+	.cart-float-bar {
 		position: fixed;
-		bottom: 0;
+		bottom: 100rpx; /* 为底部TabBar留空间 */
 		left: 0;
 		right: 0;
-		height: 100rpx;
-		background-color: #333;
+		height: 120rpx;
+		background-color: #333333;
 		display: flex;
 		align-items: center;
-		padding: 0 20rpx;
-		box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+		padding: 0 30rpx;
+		box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
 		z-index: 100;
 	}
 	
 	.cart-icon-wrapper {
 		position: relative;
-		margin-right: 20rpx;
+		margin-right: 24rpx;
 	}
 	
-	.cart-icon {
-		font-size: 50rpx;
-		color: white;
+	.cart-icon-large {
+		font-size: 56rpx;
 	}
 	
 	.cart-badge {
 		position: absolute;
-		top: -10rpx;
-		right: -10rpx;
+		top: -8rpx;
+		right: -8rpx;
+		min-width: 32rpx;
+		height: 32rpx;
 		background-color: #FF5722;
-		color: white;
-		border-radius: 50%;
-		padding: 4rpx 10rpx;
+		border-radius: 16rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 8rpx;
+	}
+	
+	.badge-text {
 		font-size: 20rpx;
-		line-height: 1;
+		color: #FFFFFF;
+		font-weight: bold;
 	}
 	
 	.cart-summary {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		color: white;
+		gap: 4rpx;
 	}
 	
 	.cart-total {
-		font-size: 36rpx;
+		font-size: 40rpx;
 		font-weight: bold;
-		color: #FFEB3B;
+		color: #FFD700;
 	}
 	
 	.cart-count {
 		font-size: 24rpx;
-		color: #ccc;
+		color: #CCCCCC;
 	}
 	
 	.checkout-btn {
-		width: 200rpx;
-		height: 80rpx;
-		line-height: 80rpx;
-		font-size: 32rpx;
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
+		padding: 20rpx 40rpx;
 		background-color: #FF5722;
-		color: white;
-		padding: 0;
+		border-radius: 30rpx;
 	}
 	
-	.checkout-btn[disabled] {
-		background-color: #999;
+	.checkout-btn.disabled {
+		background-color: #999999;
+		opacity: 0.6;
 	}
 	
-	.loading-text, .empty-text {
-		text-align: center;
-		padding: 50rpx;
-		color: #999;
+	.checkout-icon {
+		font-size: 32rpx;
+	}
+	
+	.checkout-text {
+		font-size: 30rpx;
+		color: #FFFFFF;
+		font-weight: bold;
 	}
 </style>
