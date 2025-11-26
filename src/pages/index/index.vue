@@ -3,7 +3,7 @@
 		<!-- 顶部用户信息区域 -->
 		<view class="header-section">
 			<view class="user-info">
-				<text class="user-name">{{ userInfo.customer_name || 'Zhang San Dealer' }}</text>
+				<text class="user-name">{{ userInfo.customer_name || '张三经销商' }}</text>
 				<text class="user-id">ID: {{ userInfo.customer_id || '88234567' }}</text>
 			</view>
 			<view class="header-icons">
@@ -19,21 +19,21 @@
 		
 		<!-- 账户余额卡片 -->
 		<view class="balance-card">
-			<view class="balance-label">Account Balance</view>
-			<view class="balance-amount">¥{{ balance.available_balance.toFixed(2) }}</view>
+			<text class="balance-label">账户余额</text>
+			<text class="balance-amount">¥{{ balance.available_balance.toFixed(2) }}</text>
 			<view class="balance-divider"></view>
 			<view class="balance-details">
 				<view class="detail-item">
 					<text class="detail-icon">🔒</text>
 					<view class="detail-info">
-						<text class="detail-label">Frozen Amount</text>
+						<text class="detail-label">冻结金额</text>
 						<text class="detail-value">¥{{ balance.frozen_amount.toFixed(2) }}</text>
 					</view>
 				</view>
 				<view class="detail-item">
 					<text class="detail-icon">💳</text>
 					<view class="detail-info">
-						<text class="detail-label">Credit Limit</text>
+						<text class="detail-label">授信额度</text>
 						<text class="detail-value">¥{{ balance.credit_limit.toFixed(2) }}</text>
 					</view>
 				</view>
@@ -42,16 +42,16 @@
 		
 		<!-- 资金流水标题 -->
 		<view class="section-header">
-			<text class="section-title">Fund Flow Records</text>
+			<text class="section-title">资金流水记录</text>
 		</view>
 		
 		<!-- 资金流水列表 -->
 		<view class="transaction-list">
 			<view v-if="loading" class="loading-state">
-				<text class="loading-text">Loading...</text>
+				<text class="loading-text">加载中...</text>
 			</view>
 			<view v-else-if="transactions.length === 0" class="empty-state">
-				<text class="empty-text">No transaction records</text>
+				<text class="empty-text">暂无流水记录</text>
 			</view>
 			<view v-else class="transaction-items">
 				<view 
@@ -70,7 +70,7 @@
 						>
 							{{ item.amount > 0 ? '+' : '' }}¥{{ Math.abs(item.amount).toFixed(2) }}
 						</text>
-						<text class="transaction-balance">Balance: ¥{{ item.new_balance.toFixed(2) }}</text>
+						<text class="transaction-balance">余额: ¥{{ item.new_balance.toFixed(2) }}</text>
 					</view>
 				</view>
 			</view>
@@ -92,7 +92,7 @@
 				},
 				transactions: [],
 				loading: false,
-				hasNotification: true, // 是否有未读通知
+				hasNotification: true,
 			};
 		},
 		onShow() {
@@ -140,13 +140,13 @@
 	/* 页面容器 */
 	.page-container {
 		min-height: 100vh;
-		background-color: #F5F5F5;
+		background-color: #000000;
 	}
 	
 	/* 顶部用户信息区域 */
 	.header-section {
-		background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
-		padding: 40rpx 30rpx 30rpx;
+		background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+		padding: 60rpx 40rpx 40rpx;
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
@@ -159,25 +159,25 @@
 	}
 	
 	.user-name {
-		font-size: 40rpx;
+		font-size: 44rpx;
 		font-weight: bold;
 		color: #FFFFFF;
-		margin-bottom: 8rpx;
+		margin-bottom: 12rpx;
 	}
 	
 	.user-id {
-		font-size: 26rpx;
-		color: rgba(255, 255, 255, 0.9);
+		font-size: 28rpx;
+		color: rgba(255, 255, 255, 0.85);
 	}
 	
 	.header-icons {
 		display: flex;
-		gap: 20rpx;
+		gap: 24rpx;
 	}
 	
 	.icon-btn {
-		width: 60rpx;
-		height: 60rpx;
+		width: 68rpx;
+		height: 68rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -185,47 +185,50 @@
 	}
 	
 	.icon-btn .icon {
-		font-size: 40rpx;
+		font-size: 44rpx;
 	}
 	
 	.red-dot {
 		position: absolute;
-		top: 8rpx;
-		right: 8rpx;
-		width: 16rpx;
-		height: 16rpx;
-		background-color: #FF5722;
+		top: 10rpx;
+		right: 10rpx;
+		width: 18rpx;
+		height: 18rpx;
+		background-color: #FF5252;
 		border-radius: 50%;
-		border: 2rpx solid #1976D2;
+		border: 3rpx solid #4A90E2;
 	}
 	
 	/* 账户余额卡片 */
 	.balance-card {
 		background-color: #FFFFFF;
-		margin: 30rpx;
-		padding: 40rpx 30rpx;
-		border-radius: 16rpx;
-		box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+		margin: -40rpx 30rpx 0;
+		padding: 50rpx 40rpx;
+		border-radius: 20rpx;
+		box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.08);
+		text-align: center;
 	}
 	
 	.balance-label {
-		font-size: 28rpx;
-		color: #666666;
-		margin-bottom: 12rpx;
+		font-size: 30rpx;
+		color: #333333;
+		margin-bottom: 16rpx;
+		display: block;
 	}
 	
 	.balance-amount {
-		font-size: 64rpx;
+		font-size: 72rpx;
 		font-weight: bold;
 		color: #1976D2;
-		margin-bottom: 24rpx;
-		letter-spacing: 1rpx;
+		margin-bottom: 32rpx;
+		letter-spacing: 2rpx;
+		display: block;
 	}
 	
 	.balance-divider {
-		height: 1rpx;
-		background: linear-gradient(to right, transparent, #E0E0E0, transparent);
-		margin-bottom: 24rpx;
+		height: 2rpx;
+		background: linear-gradient(to right, transparent, #E0E0E0 20%, #E0E0E0 80%, transparent);
+		margin-bottom: 32rpx;
 	}
 	
 	.balance-details {
@@ -235,47 +238,48 @@
 	
 	.detail-item {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		gap: 12rpx;
 	}
 	
 	.detail-icon {
-		font-size: 36rpx;
+		font-size: 40rpx;
 	}
 	
 	.detail-info {
 		display: flex;
 		flex-direction: column;
+		align-items: center;
 	}
 	
 	.detail-label {
-		font-size: 24rpx;
+		font-size: 26rpx;
 		color: #999999;
-		margin-bottom: 4rpx;
+		margin-bottom: 8rpx;
 	}
 	
 	.detail-value {
-		font-size: 28rpx;
+		font-size: 32rpx;
 		font-weight: bold;
 		color: #333333;
 	}
 	
 	/* 资金流水标题 */
 	.section-header {
-		background-color: #FFFFFF;
-		padding: 24rpx 30rpx;
-		margin-top: 20rpx;
+		background-color: transparent;
+		padding: 40rpx 30rpx 24rpx;
 	}
 	
 	.section-title {
-		font-size: 32rpx;
+		font-size: 36rpx;
 		font-weight: bold;
 		color: #1976D2;
 	}
 	
 	/* 资金流水列表 */
 	.transaction-list {
-		background-color: #FFFFFF;
+		background-color: transparent;
 		padding: 0 30rpx 30rpx;
 		min-height: 400rpx;
 	}
@@ -295,25 +299,24 @@
 	.transaction-items {
 		display: flex;
 		flex-direction: column;
+		gap: 16rpx;
 	}
 	
 	.transaction-item {
+		background-color: #FFFFFF;
+		border-radius: 16rpx;
+		padding: 28rpx 24rpx;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 24rpx 0;
-		border-bottom: 1rpx solid #F0F0F0;
-	}
-	
-	.transaction-item:last-child {
-		border-bottom: none;
+		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 	}
 	
 	.transaction-left {
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 8rpx;
+		gap: 10rpx;
 	}
 	
 	.transaction-title {
@@ -331,11 +334,11 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-		gap: 8rpx;
+		gap: 10rpx;
 	}
 	
 	.transaction-amount {
-		font-size: 34rpx;
+		font-size: 36rpx;
 		font-weight: bold;
 	}
 	

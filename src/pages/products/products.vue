@@ -4,8 +4,7 @@
 		<view class="top-bar">
 			<text class="current-customer">{{ $store.getters.currentCustomerName }}</text>
 			<view class="logout-btn" @click="handleLogout">
-				<text class="logout-icon">⚡</text>
-				<text class="logout-text">Logout</text>
+				<text class="logout-text">退出登录</text>
 			</view>
 		</view>
 		
@@ -15,23 +14,23 @@
 				<text class="search-icon">🔍</text>
 				<input 
 					class="search-input" 
-					placeholder="Search products" 
+					placeholder="搜索商品" 
 					v-model="searchKeyword" 
 					@confirm="loadProducts"
 				/>
 			</view>
 			<view class="search-btn" @click="loadProducts">
-				<text class="search-btn-text">Search</text>
+				<text class="search-btn-text">搜索</text>
 			</view>
 		</view>
 		
 		<!-- 商品列表 -->
 		<scroll-view class="product-list" scroll-y @scrolltolower="loadMore">
 			<view v-if="loading && products.length === 0" class="loading-state">
-				<text class="loading-text">Loading...</text>
+				<text class="loading-text">加载中...</text>
 			</view>
 			<view v-else-if="products.length === 0" class="empty-state">
-				<text class="empty-text">No products found</text>
+				<text class="empty-text">暂无商品</text>
 			</view>
 			<view v-else class="product-items">
 				<view 
@@ -52,13 +51,13 @@
 						<text class="product-spec">{{ product.spec }}</text>
 						<text class="product-price">¥{{ product.price.toFixed(2) }}</text>
 						<view class="stock-badge" :class="product.stock <= 0 ? 'out-of-stock' : ''">
-							<text class="stock-text">Stock: {{ product.stock > 0 ? product.stock : 'Out' }}</text>
+							<text class="stock-text">库存: {{ product.stock > 0 ? product.stock : '缺货' }}</text>
 						</view>
 					</view>
 					
 					<!-- 操作区域 -->
 					<view class="product-actions">
-						<text class="min-order-label">Min Order: {{ product.min_order_qty }}</text>
+						<text class="min-order-label">起订: {{ product.min_order_qty }}</text>
 						<view class="quantity-stepper">
 							<view 
 								class="stepper-btn minus" 
@@ -86,7 +85,7 @@
 							@click="addToCart(product)"
 						>
 							<text class="cart-icon">🛒</text>
-							<text class="cart-text">Add to Cart</text>
+							<text class="cart-text">加入购物车</text>
 						</view>
 					</view>
 				</view>
@@ -103,11 +102,11 @@
 			</view>
 			<view class="cart-summary">
 				<text class="cart-total">¥{{ $store.getters.cartTotal.toFixed(2) }}</text>
-				<text class="cart-count">{{ $store.state.cart.length }} items</text>
+				<text class="cart-count">{{ $store.state.cart.length }} 件商品</text>
 			</view>
 			<view class="checkout-btn" :class="$store.getters.cartCount === 0 ? 'disabled' : ''">
 				<text class="checkout-icon">💳</text>
-				<text class="checkout-text">Checkout</text>
+				<text class="checkout-text">去结算</text>
 			</view>
 		</view>
 	</view>
@@ -139,8 +138,8 @@
 		methods: {
 			handleLogout() {
 				uni.showModal({
-					title: 'Confirm Logout',
-					content: 'Are you sure you want to logout?',
+					title: '确认退出',
+					content: '确定要退出登录吗？',
 					success: (res) => {
 						if (res.confirm) {
 							this.$store.commit('LOGOUT');
@@ -157,7 +156,6 @@
 				if (res.success) {
 					let productList = res.data;
 					
-					// 过滤搜索结果
 					if (this.searchKeyword) {
 						productList = productList.filter(p => 
 							p.name.includes(this.searchKeyword) || 
@@ -165,7 +163,6 @@
 						);
 					}
 					
-					// 获取实时库存
 					const productIds = productList.map(p => p.product_id);
 					const stockRes = await api.productStock(productIds);
 					
@@ -181,7 +178,7 @@
 								...p,
 								stock: stockMap[p.product_id] || 0,
 								qty: cartItem ? cartItem.qty : 0,
-								image: p.image || '/static/placeholder.png', // 商品图片
+								image: p.image || '/static/placeholder.png',
 							};
 						});
 					} else {
@@ -196,7 +193,7 @@
 				if (newQty < 0) newQty = 0;
 				if (newQty > product.stock && product.stock > 0) {
 					newQty = product.stock;
-					uni.showToast({ title: 'Max stock reached', icon: 'none' });
+					uni.showToast({ title: '已达最大库存', icon: 'none' });
 				}
 				product.qty = newQty;
 				this.updateCart(product);
@@ -207,12 +204,11 @@
 				}
 				if (product.qty > product.stock && product.stock > 0) {
 					product.qty = product.stock;
-					uni.showToast({ title: 'Max stock reached', icon: 'none' });
+					uni.showToast({ title: '已达最大库存', icon: 'none' });
 				}
-				// 确保数量是起订量的倍数
 				if (product.qty % product.min_order_qty !== 0) {
 					product.qty = Math.floor(product.qty / product.min_order_qty) * product.min_order_qty;
-					uni.showToast({ title: `Quantity must be multiple of ${product.min_order_qty}`, icon: 'none' });
+					uni.showToast({ title: `数量必须是${product.min_order_qty}的倍数`, icon: 'none' });
 				}
 				this.updateCart(product);
 			},
@@ -236,7 +232,7 @@
 					product.qty = product.min_order_qty;
 				}
 				this.updateCart(product);
-				uni.showToast({ title: 'Added to cart', icon: 'success' });
+				uni.showToast({ title: '已加入购物车', icon: 'success' });
 			},
 			goToCart() {
 				if (this.$store.getters.cartCount > 0) {
@@ -244,7 +240,7 @@
 				}
 			},
 			loadMore() {
-				// 分页加载逻辑（可选）
+				// 分页加载逻辑
 			}
 		}
 	}
@@ -255,13 +251,13 @@
 	.page-container {
 		min-height: 100vh;
 		background-color: #F5F5F5;
-		padding-bottom: 140rpx; /* 为底部购物车栏留空间 */
+		padding-bottom: 140rpx;
 	}
 	
 	/* 顶部用户信息栏 */
 	.top-bar {
 		background-color: #FFFFFF;
-		padding: 20rpx 30rpx;
+		padding: 24rpx 30rpx;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
@@ -269,22 +265,16 @@
 	}
 	
 	.current-customer {
-		font-size: 32rpx;
+		font-size: 34rpx;
 		font-weight: bold;
 		color: #333333;
 	}
 	
 	.logout-btn {
-		display: flex;
-		align-items: center;
-		gap: 8rpx;
-		padding: 12rpx 24rpx;
-		background-color: #F5F5F5;
-		border-radius: 24rpx;
-	}
-	
-	.logout-icon {
-		font-size: 28rpx;
+		padding: 16rpx 32rpx;
+		background-color: #FFFFFF;
+		border: 2rpx solid #E0E0E0;
+		border-radius: 28rpx;
 	}
 	
 	.logout-text {
@@ -295,7 +285,7 @@
 	/* 搜索栏 */
 	.search-section {
 		background-color: #FFFFFF;
-		padding: 20rpx 30rpx;
+		padding: 24rpx 30rpx;
 		display: flex;
 		gap: 20rpx;
 		border-bottom: 1rpx solid #E0E0E0;
@@ -306,14 +296,14 @@
 		display: flex;
 		align-items: center;
 		background-color: #F5F5F5;
-		border-radius: 30rpx;
-		padding: 0 24rpx;
-		height: 70rpx;
+		border-radius: 32rpx;
+		padding: 0 28rpx;
+		height: 76rpx;
 	}
 	
 	.search-icon {
-		font-size: 32rpx;
-		margin-right: 12rpx;
+		font-size: 34rpx;
+		margin-right: 16rpx;
 	}
 	
 	.search-input {
@@ -324,9 +314,9 @@
 	
 	.search-btn {
 		width: 140rpx;
-		height: 70rpx;
+		height: 76rpx;
 		background-color: #1976D2;
-		border-radius: 30rpx;
+		border-radius: 32rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -340,13 +330,13 @@
 	
 	/* 商品列表 */
 	.product-list {
-		height: calc(100vh - 240rpx);
-		padding: 20rpx 30rpx;
+		height: calc(100vh - 280rpx);
+		padding: 24rpx 30rpx;
 	}
 	
 	.loading-state,
 	.empty-state {
-		padding: 100rpx 0;
+		padding: 120rpx 0;
 		text-align: center;
 	}
 	
@@ -359,23 +349,23 @@
 	.product-items {
 		display: flex;
 		flex-direction: column;
-		gap: 20rpx;
+		gap: 24rpx;
 	}
 	
 	/* 商品卡片 */
 	.product-card {
 		background-color: #FFFFFF;
-		border-radius: 16rpx;
-		padding: 24rpx;
+		border-radius: 20rpx;
+		padding: 28rpx;
 		display: flex;
-		gap: 20rpx;
-		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+		gap: 24rpx;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 	}
 	
 	.product-image {
-		width: 160rpx;
-		height: 160rpx;
-		border-radius: 12rpx;
+		width: 180rpx;
+		height: 180rpx;
+		border-radius: 16rpx;
 		background-color: #F5F5F5;
 		flex-shrink: 0;
 	}
@@ -384,11 +374,12 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 8rpx;
+		gap: 10rpx;
+		justify-content: center;
 	}
 	
 	.product-name {
-		font-size: 30rpx;
+		font-size: 32rpx;
 		font-weight: bold;
 		color: #333333;
 		overflow: hidden;
@@ -397,67 +388,65 @@
 	}
 	
 	.product-spec {
-		font-size: 24rpx;
+		font-size: 26rpx;
 		color: #999999;
 	}
 	
 	.product-price {
-		font-size: 36rpx;
+		font-size: 40rpx;
 		font-weight: bold;
-		color: #E64A19;
-		margin-top: 4rpx;
+		color: #FF5722;
+		margin-top: 8rpx;
 	}
 	
 	.stock-badge {
 		display: inline-flex;
 		align-items: center;
-		padding: 6rpx 16rpx;
-		background-color: #E3F2FD;
-		border-radius: 20rpx;
+		padding: 8rpx 20rpx;
+		background-color: #1976D2;
+		border-radius: 24rpx;
 		align-self: flex-start;
 	}
 	
 	.stock-badge.out-of-stock {
-		background-color: #FFEBEE;
+		background-color: #F44336;
 	}
 	
 	.stock-text {
 		font-size: 22rpx;
-		color: #1976D2;
+		color: #FFFFFF;
 		font-weight: 500;
-	}
-	
-	.stock-badge.out-of-stock .stock-text {
-		color: #F44336;
 	}
 	
 	/* 操作区域 */
 	.product-actions {
 		display: flex;
 		flex-direction: column;
-		gap: 12rpx;
+		gap: 16rpx;
 		align-items: flex-end;
+		justify-content: center;
 	}
 	
 	.min-order-label {
 		font-size: 22rpx;
 		color: #999999;
 		background-color: #F5F5F5;
-		padding: 4rpx 12rpx;
-		border-radius: 12rpx;
+		padding: 6rpx 16rpx;
+		border-radius: 16rpx;
 	}
 	
 	.quantity-stepper {
 		display: flex;
 		align-items: center;
-		border: 1rpx solid #E0E0E0;
-		border-radius: 8rpx;
+		border: 2rpx solid #E0E0E0;
+		border-radius: 10rpx;
 		overflow: hidden;
+		background-color: #FFFFFF;
 	}
 	
 	.stepper-btn {
-		width: 50rpx;
-		height: 50rpx;
+		width: 56rpx;
+		height: 56rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -469,14 +458,14 @@
 	}
 	
 	.stepper-icon {
-		font-size: 32rpx;
+		font-size: 36rpx;
 		color: #666666;
 		font-weight: bold;
 	}
 	
 	.quantity-input {
-		width: 80rpx;
-		height: 50rpx;
+		width: 88rpx;
+		height: 56rpx;
 		text-align: center;
 		font-size: 28rpx;
 		color: #333333;
@@ -486,10 +475,10 @@
 	.add-cart-btn {
 		display: flex;
 		align-items: center;
-		gap: 8rpx;
-		padding: 12rpx 24rpx;
+		gap: 10rpx;
+		padding: 16rpx 28rpx;
 		background-color: #4CAF50;
-		border-radius: 24rpx;
+		border-radius: 28rpx;
 	}
 	
 	.add-cart-btn.disabled {
@@ -514,43 +503,43 @@
 	/* 底部购物车悬浮栏 */
 	.cart-float-bar {
 		position: fixed;
-		bottom: 100rpx; /* 为底部TabBar留空间 */
+		bottom: 100rpx;
 		left: 0;
 		right: 0;
 		height: 120rpx;
-		background-color: #333333;
+		background-color: #2C2C2C;
 		display: flex;
 		align-items: center;
 		padding: 0 30rpx;
-		box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+		box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.15);
 		z-index: 100;
 	}
 	
 	.cart-icon-wrapper {
 		position: relative;
-		margin-right: 24rpx;
+		margin-right: 28rpx;
 	}
 	
 	.cart-icon-large {
-		font-size: 56rpx;
+		font-size: 60rpx;
 	}
 	
 	.cart-badge {
 		position: absolute;
-		top: -8rpx;
-		right: -8rpx;
-		min-width: 32rpx;
-		height: 32rpx;
+		top: -10rpx;
+		right: -10rpx;
+		min-width: 36rpx;
+		height: 36rpx;
 		background-color: #FF5722;
-		border-radius: 16rpx;
+		border-radius: 18rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 0 8rpx;
+		padding: 0 10rpx;
 	}
 	
 	.badge-text {
-		font-size: 20rpx;
+		font-size: 22rpx;
 		color: #FFFFFF;
 		font-weight: bold;
 	}
@@ -559,11 +548,11 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 4rpx;
+		gap: 6rpx;
 	}
 	
 	.cart-total {
-		font-size: 40rpx;
+		font-size: 44rpx;
 		font-weight: bold;
 		color: #FFD700;
 	}
@@ -576,10 +565,10 @@
 	.checkout-btn {
 		display: flex;
 		align-items: center;
-		gap: 8rpx;
-		padding: 20rpx 40rpx;
+		gap: 10rpx;
+		padding: 24rpx 44rpx;
 		background-color: #FF5722;
-		border-radius: 30rpx;
+		border-radius: 32rpx;
 	}
 	
 	.checkout-btn.disabled {

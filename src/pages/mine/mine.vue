@@ -4,15 +4,15 @@
 		<view class="header-section">
 			<view class="user-card">
 				<view class="avatar-circle">
-					<text class="avatar-letter">{{ userInfo.customer_name ? userInfo.customer_name.substring(0, 1) : 'Z' }}</text>
+					<text class="avatar-letter">{{ userInfo.customer_name ? userInfo.customer_name.substring(0, 1) : '张' }}</text>
 				</view>
 				<view class="user-details">
-					<text class="user-name">{{ userInfo.customer_name || 'Zhang San Dealer' }}</text>
-					<text class="user-id">Customer ID: {{ userInfo.customer_id || '88291034' }}</text>
+					<text class="user-name">{{ userInfo.customer_name || '张三经销商' }}</text>
+					<text class="user-id">客户ID: {{ userInfo.customer_id || '88291034' }}</text>
 				</view>
 			</view>
 			<view class="logout-button" @click="handleLogout">
-				<text class="logout-text">Logout</text>
+				<text class="logout-text">退出登录</text>
 			</view>
 		</view>
 		
@@ -20,7 +20,7 @@
 		<view class="menu-section">
 			<view class="menu-item" @click="goToCart">
 				<text class="menu-icon">🛒</text>
-				<text class="menu-title">Shopping Cart</text>
+				<text class="menu-title">购物车</text>
 				<view v-if="$store.getters.cartCount > 0" class="menu-badge">
 					<text class="badge-number">{{ $store.getters.cartCount }}</text>
 				</view>
@@ -29,11 +29,11 @@
 			<view v-if="$store.getters.isSalesRep" class="menu-item" @click="goToDealerSelect">
 				<text class="menu-icon">👥</text>
 				<view class="menu-content">
-					<text class="menu-title">Proxy Order</text>
-					<text class="menu-subtitle">Place orders on behalf of customers</text>
+					<text class="menu-title">代客下单</text>
+					<text class="menu-subtitle">为客户代理下单</text>
 				</view>
 				<view class="sales-rep-badge">
-					<text class="badge-text">Sales Rep Only</text>
+					<text class="badge-text">仅业务员</text>
 				</view>
 				<text class="menu-arrow">›</text>
 			</view>
@@ -41,16 +41,16 @@
 		
 		<!-- 我的订单标题 -->
 		<view class="section-header">
-			<text class="section-title">My Orders</text>
+			<text class="section-title">我的订单</text>
 		</view>
 		
 		<!-- 订单列表 -->
 		<view class="order-list">
 			<view v-if="loading" class="loading-state">
-				<text class="loading-text">Loading...</text>
+				<text class="loading-text">加载中...</text>
 			</view>
 			<view v-else-if="orders.length === 0" class="empty-state">
-				<text class="empty-text">No orders yet</text>
+				<text class="empty-text">暂无订单</text>
 			</view>
 			<view v-else class="order-items">
 				<view 
@@ -60,12 +60,14 @@
 					@click="goToOrderDetail(order)"
 				>
 					<view class="order-header">
-						<text class="order-number">Order #{{ order.order_id }}</text>
+						<text class="order-number">订单 #{{ order.order_id }}</text>
 						<view 
 							class="status-badge" 
 							:class="{
-								'status-pending': order.erp_status_text === 'Pending Shipment',
-								'status-cancelled': order.erp_status_text === 'Cancelled'
+								'status-pending': order.erp_status_text === '待发货',
+								'status-shipped': order.erp_status_text === '已发货',
+								'status-delivered': order.erp_status_text === '已收货',
+								'status-cancelled': order.erp_status_text === '已取消'
 							}"
 						>
 							<text class="status-text">{{ order.erp_status_text }}</text>
@@ -73,7 +75,7 @@
 					</view>
 					<view class="order-footer">
 						<text class="order-date">{{ order.order_date }}</text>
-						<text class="order-amount">${{ order.total_amount.toFixed(2) }}</text>
+						<text class="order-amount">¥{{ order.total_amount.toFixed(2) }}</text>
 					</view>
 				</view>
 			</view>
@@ -108,8 +110,8 @@
 		methods: {
 			handleLogout() {
 				uni.showModal({
-					title: 'Confirm Logout',
-					content: 'Are you sure you want to logout?',
+					title: '确认退出',
+					content: '确定要退出登录吗？',
 					success: (res) => {
 						if (res.confirm) {
 							this.$store.commit('LOGOUT');
@@ -152,25 +154,25 @@
 	
 	/* 顶部用户信息区域 */
 	.header-section {
-		background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
-		padding: 40rpx 30rpx 30rpx;
+		background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+		padding: 50rpx 30rpx 40rpx;
 		display: flex;
 		flex-direction: column;
-		gap: 24rpx;
+		gap: 32rpx;
 	}
 	
 	.user-card {
 		display: flex;
 		align-items: center;
-		gap: 24rpx;
+		gap: 28rpx;
 	}
 	
 	.avatar-circle {
-		width: 120rpx;
-		height: 120rpx;
+		width: 128rpx;
+		height: 128rpx;
 		border-radius: 50%;
-		background-color: rgba(255, 255, 255, 0.25);
-		border: 4rpx solid rgba(255, 255, 255, 0.5);
+		background-color: rgba(255, 255, 255, 0.3);
+		border: 4rpx solid rgba(255, 255, 255, 0.6);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -178,7 +180,7 @@
 	}
 	
 	.avatar-letter {
-		font-size: 56rpx;
+		font-size: 60rpx;
 		font-weight: bold;
 		color: #FFFFFF;
 	}
@@ -187,11 +189,11 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 8rpx;
+		gap: 10rpx;
 	}
 	
 	.user-name {
-		font-size: 40rpx;
+		font-size: 42rpx;
 		font-weight: bold;
 		color: #FFFFFF;
 	}
@@ -203,13 +205,13 @@
 	
 	.logout-button {
 		align-self: stretch;
-		height: 80rpx;
+		height: 84rpx;
 		background-color: rgba(255, 255, 255, 0.95);
-		border-radius: 40rpx;
+		border-radius: 42rpx;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
 	}
 	
 	.logout-text {
@@ -222,15 +224,15 @@
 	.menu-section {
 		background-color: #FFFFFF;
 		margin: 30rpx;
-		border-radius: 16rpx;
+		border-radius: 20rpx;
 		overflow: hidden;
-		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 	}
 	
 	.menu-item {
 		display: flex;
 		align-items: center;
-		padding: 28rpx 24rpx;
+		padding: 32rpx 28rpx;
 		border-bottom: 1rpx solid #F0F0F0;
 		position: relative;
 	}
@@ -240,13 +242,13 @@
 	}
 	
 	.menu-icon {
-		font-size: 44rpx;
-		margin-right: 20rpx;
+		font-size: 48rpx;
+		margin-right: 24rpx;
 	}
 	
 	.menu-title {
 		flex: 1;
-		font-size: 30rpx;
+		font-size: 32rpx;
 		color: #333333;
 		font-weight: 500;
 	}
@@ -255,7 +257,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 4rpx;
+		gap: 6rpx;
 	}
 	
 	.menu-subtitle {
@@ -265,59 +267,58 @@
 	
 	.menu-badge {
 		background-color: #FF5722;
-		border-radius: 20rpx;
-		padding: 4rpx 12rpx;
-		margin-right: 12rpx;
+		border-radius: 24rpx;
+		padding: 6rpx 16rpx;
+		margin-right: 16rpx;
 	}
 	
 	.badge-number {
-		font-size: 22rpx;
+		font-size: 24rpx;
 		color: #FFFFFF;
 		font-weight: bold;
 	}
 	
 	.sales-rep-badge {
 		background-color: #E3F2FD;
-		border-radius: 16rpx;
-		padding: 6rpx 16rpx;
-		margin-right: 12rpx;
+		border-radius: 20rpx;
+		padding: 8rpx 20rpx;
+		margin-right: 16rpx;
 	}
 	
 	.badge-text {
-		font-size: 22rpx;
+		font-size: 24rpx;
 		color: #1976D2;
 		font-weight: 500;
 	}
 	
 	.menu-arrow {
-		font-size: 56rpx;
+		font-size: 60rpx;
 		color: #CCCCCC;
 		font-weight: 300;
 	}
 	
 	/* 我的订单标题 */
 	.section-header {
-		background-color: #FFFFFF;
-		padding: 28rpx 30rpx;
-		margin-top: 20rpx;
+		background-color: transparent;
+		padding: 32rpx 30rpx 24rpx;
 	}
 	
 	.section-title {
-		font-size: 36rpx;
+		font-size: 38rpx;
 		font-weight: bold;
 		color: #333333;
 	}
 	
 	/* 订单列表 */
 	.order-list {
-		background-color: #FFFFFF;
+		background-color: transparent;
 		padding: 0 30rpx 30rpx;
 		min-height: 400rpx;
 	}
 	
 	.loading-state,
 	.empty-state {
-		padding: 100rpx 0;
+		padding: 120rpx 0;
 		text-align: center;
 	}
 	
@@ -330,38 +331,46 @@
 	.order-items {
 		display: flex;
 		flex-direction: column;
-		gap: 20rpx;
+		gap: 24rpx;
 	}
 	
 	/* 订单卡片 */
 	.order-card {
-		background-color: #FAFAFA;
-		border-radius: 16rpx;
-		padding: 24rpx;
-		border: 1rpx solid #E0E0E0;
+		background-color: #FFFFFF;
+		border-radius: 20rpx;
+		padding: 28rpx;
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
 	}
 	
 	.order-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 16rpx;
+		margin-bottom: 20rpx;
 	}
 	
 	.order-number {
-		font-size: 28rpx;
+		font-size: 30rpx;
 		color: #333333;
 		font-weight: bold;
 	}
 	
 	.status-badge {
-		padding: 8rpx 20rpx;
-		border-radius: 20rpx;
+		padding: 10rpx 24rpx;
+		border-radius: 24rpx;
 		background-color: #E0E0E0;
 	}
 	
 	.status-badge.status-pending {
 		background-color: #1976D2;
+	}
+	
+	.status-badge.status-shipped {
+		background-color: #FF9800;
+	}
+	
+	.status-badge.status-delivered {
+		background-color: #4CAF50;
 	}
 	
 	.status-badge.status-cancelled {
@@ -386,8 +395,8 @@
 	}
 	
 	.order-amount {
-		font-size: 36rpx;
+		font-size: 38rpx;
 		font-weight: bold;
-		color: #E64A19;
+		color: #FF5722;
 	}
 </style>
