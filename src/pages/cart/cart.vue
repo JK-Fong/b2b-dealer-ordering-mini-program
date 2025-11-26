@@ -16,9 +16,9 @@
 					<view class="item-actions">
 						<text class="item-subtotal">小计: ¥ {{ (item.price * item.qty).toFixed(2) }}</text>
 						<view class="quantity-control">
-							<button class="qty-btn" @click="changeQuantity(item, -item.min_order_qty)">-</button>
+							<button class="qty-btn" @click="changeQuantity(item, -1)">-</button>
 							<input class="qty-input" type="number" v-model.number="item.qty" @blur="validateQuantity(item)" />
-							<button class="qty-btn" @click="changeQuantity(item, item.min_order_qty)">+</button>
+							<button class="qty-btn" @click="changeQuantity(item, 1)">+</button>
 						</view>
 						<text class="delete-btn" @click="removeItem(item.product_id)">删除</text>
 					</view>
@@ -57,8 +57,8 @@
 			},
 			changeQuantity(item, delta) {
 				let newQty = item.qty + delta;
-				if (newQty < item.min_order_qty) {
-					newQty = 0; // 数量小于起订量时，直接清空
+				if (newQty < 1) {
+					newQty = 0;
 				}
 				
 				if (newQty === 0) {
@@ -66,26 +66,17 @@
 					return;
 				}
 				
-				// 确保数量是起订量的倍数
-				if (newQty % item.min_order_qty !== 0) {
-					newQty = Math.floor(newQty / item.min_order_qty) * item.min_order_qty;
-					uni.showToast({ title: `数量必须是起订量 ${item.min_order_qty} 的倍数`, icon: 'none' });
-				}
-				
 				item.qty = newQty;
 				this.$store.commit('UPDATE_CART_QTY', { product_id: item.product_id, qty: item.qty });
 			},
 			validateQuantity(item) {
-				if (item.qty < item.min_order_qty || isNaN(item.qty)) {
-					item.qty = item.min_order_qty;
-					uni.showToast({ title: `数量不能小于起订量 ${item.min_order_qty}`, icon: 'none' });
+				if (item.qty < 1 || isNaN(item.qty)) {
+					item.qty = 1;
+					uni.showToast({ title: '数量至少为1', icon: 'none' });
 				}
 				
-				// 确保数量是起订量的倍数
-				if (item.qty % item.min_order_qty !== 0) {
-					item.qty = Math.floor(item.qty / item.min_order_qty) * item.min_order_qty;
-					uni.showToast({ title: `数量必须是起订量 ${item.min_order_qty} 的倍数`, icon: 'none' });
-				}
+				// 确保是整数
+				item.qty = Math.floor(item.qty);
 				
 				this.$store.commit('UPDATE_CART_QTY', { product_id: item.product_id, qty: item.qty });
 			},
@@ -141,6 +132,7 @@
 
 	.cart-list {
 		padding: 20rpx;
+		padding-bottom: 140rpx;
 	}
 
 	.cart-item {
@@ -228,13 +220,13 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		height: 100rpx;
+		height: 96rpx;
 		background-color: white;
 		display: flex;
 		align-items: center;
-		padding: 0 20rpx;
-		box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-		z-index: 100;
+		padding: 0 24rpx;
+		box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+		z-index: 99;
 	}
 	
 	.summary-info {
@@ -244,24 +236,26 @@
 	}
 	
 	.total-label {
-		font-size: 32rpx;
-		color: #333;
+		font-size: 28rpx;
+		color: #666;
 		margin-right: 10rpx;
 	}
 	
 	.total-amount {
-		font-size: 40rpx;
+		font-size: 36rpx;
 		font-weight: bold;
-		color: #E64A19;
+		color: #FA5151;
 	}
 	
 	.checkout-btn {
-		width: 250rpx;
-		height: 80rpx;
-		line-height: 80rpx;
-		font-size: 32rpx;
-		background-color: #FF5722;
+		width: 220rpx;
+		height: 72rpx;
+		line-height: 72rpx;
+		font-size: 28rpx;
+		background: linear-gradient(135deg, #FA5151 0%, #E64340 100%);
 		color: white;
 		padding: 0;
+		border-radius: 40rpx;
+		box-shadow: 0 4rpx 12rpx rgba(250, 81, 81, 0.3);
 	}
 </style>
